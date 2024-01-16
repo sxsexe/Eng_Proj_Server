@@ -2,7 +2,7 @@
 // const { MongoClient } = createRequire("mongodb")
 
 import { DB_URL } from './db_common.js';
-import mongodb from 'mongodb'
+import mongodb, { ObjectId } from 'mongodb'
 const MongoClient = mongodb.MongoClient;
 
 const url = DB_URL;
@@ -17,9 +17,18 @@ export default {
         await client.connect();
         const db = client.db(dbName);
         const collection = db.collection(collectionBookGroups);
-        const bookGroups = await collection.find().toArray();
+        const bookGroups = await collection.find().sort({ 'order': 1 }).toArray();
         client.close();
         return bookGroups;
+    },
+
+    async getBookByIDs(ids) {
+        await client.connect();
+        const db = client.db(dbName);
+        const collection = db.collection(collectionBookInfo);
+        const books = await collection.find({ _id: { $in: ids } }).toArray();
+        client.close();
+        return books;
     },
 
     async getBookInfos(params) {

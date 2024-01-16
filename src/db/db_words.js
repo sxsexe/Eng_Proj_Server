@@ -31,5 +31,17 @@ export default {
         const word = await collection.aggregate(pipeline).toArray();
         client.close();
         return word;
+    },
+
+    async getWordByIDs(collectionName, ids) {
+
+        await client.connect();
+        const db = client.db(dbName);
+        const collection = db.collection(collectionName);
+        const words = await collection.find({ _id: { $in: ids } }).toArray();
+        client.close();
+        return words;
+
     }
+
 }

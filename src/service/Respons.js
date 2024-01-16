@@ -5,6 +5,10 @@ export class MyResponse {
         this.data = data;
     }
 
+    static buildNullDataErrorObj(error) {
+        return new MyResponse(error, null);
+    }
+
     getOutput() {
         return JSON.stringify(this);
     }

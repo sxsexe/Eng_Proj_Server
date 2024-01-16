@@ -8,6 +8,7 @@ export class Errors {
     static ERROR_UER_EXIST = { 'ERR_NO': Errors.num++, 'ERR_MSG': 'User Existed' }
     static ERROR_UER_ADD_FAILED = { 'ERR_NO': Errors.num++, 'ERR_MSG': 'User Add Failed' }
     static ERROR_LOGIN_FAILED = { 'ERR_NO': Errors.num++, 'ERR_MSG': 'User Login Failed' }
+    static ERROR_USER_UNREGISTER = { 'ERR_NO': Errors.num++, 'ERR_MSG': 'User UnRegister' }
 
     static customErrorObj(errorObj, msg) {
         var newObj = {};

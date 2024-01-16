@@ -3,6 +3,7 @@ import express from 'express'
 
 import { matchedData, query, validationResult, body } from 'express-validator'
 import { Errors } from './service/Errors.js'
+import { MyResponse } from './service/Respons.js'
 
 const port = "8889"
 const app = express()
@@ -15,8 +16,8 @@ app.use(express.json())
 
 app.post("/register",
     // validate
-    body('identifier').trim().notEmpty().escape(),
-    body('credential').trim().notEmpty().escape().isLength({ min: 6 }),
+    body('identifier').trim().notEmpty().escape().isLength({ min: 6, max: 16 }),
+    body('credential').trim().notEmpty().escape().isLength({ min: 6, max: 16 }),
     body('identity_type').trim().notEmpty().isNumeric(),
     /*
         req.body = {
@@ -33,7 +34,7 @@ app.post("/register",
                 res.end(JSON.stringify(result));
             });
         } else {
-            res.end(JSON.stringify(Errors.parseValidationErrors(result.array())));
+            res.end(JSON.stringify(MyResponse.buildNullDataErrorObj(Errors.parseValidationErrors(result.array()))));
         }
         return;
     })
@@ -42,6 +43,7 @@ app.post("/login",
 
     // validate
     body('identifier').trim().notEmpty().escape(),
+    body('credential').trim().notEmpty().escape(),
 
     (req, res) => {
         console.log("login", "req ", req.body)
@@ -49,12 +51,12 @@ app.post("/login",
         res.writeHead(200, { 'Content-Type': 'application/json' });
         if (result.isEmpty()) {
             const data = matchedData(req)
-            Service.login({ identifier: data.identifier }).then((result) => {
+            Service.login({ identifier: data.identifier, credential: data.credential }).then((result) => {
                 res.end(JSON.stringify(result));
             });
 
         } else {
-            res.end(JSON.stringify(Errors.parseValidationErrors(result.array())));
+            res.end(JSON.stringify(MyResponse.buildNullDataErrorObj(Errors.parseValidationErrors(result.array()))));
         }
         return;
 
@@ -80,7 +82,7 @@ app.post("/book_groups",
             });
 
         } else {
-            res.end(JSON.stringify(Errors.parseValidationErrors(result.array())));
+            res.end(JSON.stringify(MyResponse.buildNullDataErrorObj(Errors.parseValidationErrors(result.array()))));
         }
         return;
     })
@@ -102,11 +104,34 @@ app.post("/book_infos",
             });
 
         } else {
-            res.end(JSON.stringify(Errors.parseValidationErrors(result.array())));
+            res.end(JSON.stringify(MyResponse.buildNullDataErrorObj(Errors.parseValidationErrors(result.array()))));
         }
         return;
     })
 
+
+app.post("/get_user_books",
+
+    // validate
+    body('user_id').trim().notEmpty().escape(),
+    body('is_done').isNumeric(),
+
+    (req, res) => {
+        console.log("get_user_books", "req = ", req.body)
+        const result = validationResult(req);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        if (result.isEmpty()) {
+            // const data = matchedData(req)
+            const data = req.body;
+            Service.getUserBooks({ user_id: data.user_id, is_done: data.is_done }).then((result) => {
+                res.end(JSON.stringify(result));
+            });
+
+        } else {
+            res.end(JSON.stringify(MyResponse.buildNullDataErrorObj(Errors.parseValidationErrors(result.array()))));
+        }
+        return;
+    })
 
 app.post("/add_books",
 
@@ -157,10 +182,87 @@ app.post("/random_words",
                 res.end(JSON.stringify(result));
             });
         } else {
-            res.end(JSON.stringify(Errors.parseValidationErrors(result.array())));
+            res.end(JSON.stringify(MyResponse.buildNullDataErrorObj(Errors.parseValidationErrors(result.array()))));
         }
         return;
     })
+
+
+app.post("/upsert_user_word",
+
+    body('user_id').trim().notEmpty().escape(),
+    body('word_id').trim().notEmpty().escape(),
+    body('score').isInt(),
+
+    (req, res) => {
+
+        const result = validationResult(req);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+
+        if (result.isEmpty()) {
+            const data = matchedData(req)
+            // const data = req.body;
+            Service.upsertUnknownWord({ user_id: data.user_id, word_id: data.word_id, word_score: data.score }).then((result) => {
+                res.end(JSON.stringify(result));
+            });
+        } else {
+            res.end(JSON.stringify(MyResponse.buildNullDataErrorObj(Errors.parseValidationErrors(result.array()))));
+        }
+        return;
+    })
+
+app.post("/count_user_word",
+
+    body('user_id').trim().notEmpty().escape(),
+    body('max_score').isNumeric(),
+
+    (req, res) => {
+
+        const result = validationResult(req);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+
+        if (result.isEmpty()) {
+            const data = matchedData(req)
+            // const data = req.body;
+            var param = { user_id: data.user_id }
+            if (data.max_score > 0) {
+                param.max_score = data.max_score
+            }
+            Service.getUserWordCount(param).then((result) => {
+                res.end(JSON.stringify(result));
+            });
+        } else {
+            res.end(JSON.stringify(MyResponse.buildNullDataErrorObj(Errors.parseValidationErrors(result.array()))));
+        }
+        return;
+    })
+
+app.post("/get_user_words",
+
+    body('user_id').trim().notEmpty().escape(),
+    body('max_score').isNumeric(),
+
+    (req, res) => {
+
+        const result = validationResult(req);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+
+        if (result.isEmpty()) {
+            const data = matchedData(req)
+            // const data = req.body;
+            var param = { user_id: data.user_id }
+            if (data.max_score > 0) {
+                param.max_score = data.max_score
+            }
+            Service.getUserWords(param).then((result) => {
+                res.end(JSON.stringify(result));
+            });
+        } else {
+            res.end(JSON.stringify(MyResponse.buildNullDataErrorObj(Errors.parseValidationErrors(result.array()))));
+        }
+        return;
+    })
+
 
 // app.get("/get_word_count", (req, res) => {
 

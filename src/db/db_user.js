@@ -10,17 +10,19 @@ const MongoClient = mongodb.MongoClient;
 const url = DB_URL;
 const client = new MongoClient(url)
 
-const dbName = "user";
-const collectionName = "user_info";
+const DB = "user";
+const CN_UserInfo = "user_info";
+const CN_UserBooks = "user_books";
+const CN_UserWords = "user_words";
 
 
 export default {
-    async checkUserExist(identifier) {
+    async checkUserExist(identifier, credential) {
         await client.connect();
-        const db = client.db(dbName);
-        const collection = db.collection(collectionName);
-        console.log("DB ", "checkUserExist identifier = " + identifier)
-        const users = await collection.findOne({ auths: { $elemMatch: { 'identifier': { $eq: identifier } } } });
+        const db = client.db(DB);
+        const collection = db.collection(CN_UserInfo);
+        console.log("DB ", "checkUserExist identifier = " + identifier + ", credential = " + credential)
+        const users = await collection.findOne({ auths: { $elemMatch: { 'identifier': { $eq: identifier }, 'credential': { $eq: credential } } } });
         // const users = await collection.find().toArray();
         client.close();
         return users;
@@ -28,15 +30,15 @@ export default {
 
     async addUser(identity_type, credential, identifier) {
         await client.connect();
-        const db = client.db(dbName);
-        const collection = db.collection(collectionName);
+        const db = client.db(DB);
+        const collection = db.collection(CN_UserInfo);
         console.log("DB ", "addUser identifier = " + identifier + ", credential = " + credential + ", type = " + identity_type);
 
 
         var jsonParam = {
             "name": '',
             "avatar": '',
-            "type": 0,
+            "vip_type": 0,
             "update_time": '',
             "create_time": moment().format('YYYY-MM-DD HH:mm:ss'),
             "auths": [
@@ -48,12 +50,56 @@ export default {
             ]
         }
 
+        // username + pwd
+        if (identity_type == 1) {
+            jsonParam.name = identifier
+        }
+
         const result = await collection.insertOne(jsonParam);
         // const users = await collection.find().toArray();
         client.close();
         return result;
+    },
+
+    async getUserBooks(params) {
+        await client.connect();
+        const db = client.db(DB);
+        const collection = db.collection(CN_UserBooks);
+        console.log("DB ", "getUserBooks params = ", params)
+        const userBooks = await collection.find(params, { projection: { 'book_id': 1, '_id': 0 } }).toArray();
+        // const users = await collection.find().toArray();
+        client.close();
+        return userBooks;
+    },
+
+
+    async upsertUserWord(user_id, word_id, word_score) {
+        await client.connect();
+        const db = client.db(DB);
+        const collection = db.collection(CN_UserWords);
+        const query = { "_id": { "user_id": user_id, "word_id": word_id } };
+        const newValues = { $set: { "score": word_score } };
+        const result = await collection.updateOne(query, newValues, { upsert: true })
+        client.close();
+        return result;
+    },
+
+    async getUserWordCount(user_id, max_score) {
+        await client.connect();
+        const db = client.db(DB);
+        const collection = db.collection(CN_UserWords);
+        const result = await collection.countDocuments({ "_id.user_id": { $eq: user_id }, "score": { $lt: max_score } });
+        client.close();
+        return result;
+    },
+
+    async getUserWords(user_id, max_score) {
+        await client.connect();
+        const db = client.db(DB);
+        const collection = db.collection(CN_UserWords);
+        const result = await collection.find({ "_id.user_id": { $eq: user_id }, "score": { $lt: max_score } }).toArray();
+        client.close();
+        return result;
     }
-
-
 
 }
