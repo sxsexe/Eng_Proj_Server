@@ -1,5 +1,4 @@
 
-import { response } from "express";
 import db_books from "../db/db_books.js"
 import db_words from '../db/db_words.js'
 import db_user from '../db/db_user.js'
@@ -53,7 +52,7 @@ export class Service {
 
 
 
-    //------------------------------------------------------------
+    //-------------------------------------------------------------------
 
 
     //-----------------------------Books API-----------------------------
@@ -102,13 +101,16 @@ export class Service {
         return response;
     }
 
-    //------------------------------------------------------------
+    //-------------------------------------------------------------------
 
 
     //-----------------------------Words API-----------------------------
     static async getRandomWords({ words_coolection_name, count = 1 }) {
-        const word = await db_words.getRandomWords(words_coolection_name, count)
-        var response = new MyResponse(Errors.ERROR_NO_ERROR, { 'words': word });
+        const words = await db_words.getRandomWords(words_coolection_name, count);
+        words.forEach((word) => {
+            word['db_name'] = words_coolection_name
+        })
+        var response = new MyResponse(Errors.ERROR_NO_ERROR, { 'words': words });
         console.log("Service >>>> getRandomWords resp " + response.getOutput());
         return response;
     }
@@ -126,8 +128,8 @@ export class Service {
      * @param {*} word_id 
      * @param {*} word_score  0 : 完全忘记   50 ： 模模糊糊   80 : So Easy
      */
-    static async upsertUnknownWord({ user_id, word_id, word_score }) {
-        const rs = await db_user.upsertUserWord(user_id, word_id, word_score);
+    static async upsertUnknownWord({ user_id, word_id, word_name, score, word_db }) {
+        const rs = await db_user.upsertUserWord(user_id, word_id, word_name, score, word_db);
         var response = new MyResponse(Errors.ERROR_NO_ERROR, { 'result': rs });
         console.log("Service >>>> upsertUnknownWord resp " + response.getOutput());
         return response;
@@ -140,6 +142,7 @@ export class Service {
      * @returns count
      */
     static async getUserWordCount({ user_id, max_score = 80 }) {
+        console.log("getUserWordCount user_id =" + user_id + ", max_score = " + max_score);
         const rs = await db_user.getUserWordCount(user_id, max_score);
         var response = new MyResponse(Errors.ERROR_NO_ERROR, { 'count': rs });
         console.log("Service >>>> getUserWordCount resp " + response.getOutput());
@@ -154,6 +157,7 @@ export class Service {
      * @returns  return user unknown word list
      */
     static async getUserWords({ user_id, max_score = 80 }) {
+        console.log("getUserWords user_id =" + user_id + ", max_score = " + max_score);
         const rs = await db_user.getUserWords(user_id, max_score);
 
         var collectionIdMaps = {};
@@ -179,5 +183,5 @@ export class Service {
         return response;
     }
 
-    //------------------------------------------------------------
+    //-------------------------------------------------------------------
 }

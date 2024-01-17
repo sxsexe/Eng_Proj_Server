@@ -73,12 +73,12 @@ export default {
     },
 
 
-    async upsertUserWord(user_id, word_id, word_score) {
+    async upsertUserWord(user_id, word_id, word_name, score, word_db) {
         await client.connect();
         const db = client.db(DB);
         const collection = db.collection(CN_UserWords);
         const query = { "_id": { "user_id": user_id, "word_id": word_id } };
-        const newValues = { $set: { "score": word_score } };
+        const newValues = { $set: { "score": score, "word_db": word_db, "word_name": word_name } };
         const result = await collection.updateOne(query, newValues, { upsert: true })
         client.close();
         return result;

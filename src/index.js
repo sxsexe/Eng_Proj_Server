@@ -192,6 +192,8 @@ app.post("/upsert_user_word",
 
     body('user_id').trim().notEmpty().escape(),
     body('word_id').trim().notEmpty().escape(),
+    body('word_db').trim().notEmpty().escape(),
+    body('word_name').trim().notEmpty().escape(),
     body('score').isInt(),
 
     (req, res) => {
@@ -202,7 +204,14 @@ app.post("/upsert_user_word",
         if (result.isEmpty()) {
             const data = matchedData(req)
             // const data = req.body;
-            Service.upsertUnknownWord({ user_id: data.user_id, word_id: data.word_id, word_score: data.score }).then((result) => {
+            let params = {
+                user_id: data.user_id,
+                word_id: data.word_id,
+                score: data.score,
+                word_db: data.word_db,
+                word_name: data.word_name
+            };
+            Service.upsertUnknownWord(params).then((result) => {
                 res.end(JSON.stringify(result));
             });
         } else {

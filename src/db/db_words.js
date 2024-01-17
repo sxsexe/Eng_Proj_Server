@@ -28,9 +28,9 @@ export default {
         const pipeline = [
             { $sample: { size: parseInt(count) } }
         ];
-        const word = await collection.aggregate(pipeline).toArray();
+        const words = await collection.aggregate(pipeline).toArray();
         client.close();
-        return word;
+        return words;
     },
 
     async getWordByIDs(collectionName, ids) {
