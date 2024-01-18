@@ -5,10 +5,50 @@ import { matchedData, query, validationResult, body } from 'express-validator'
 import { Errors } from './service/Errors.js'
 import { MyResponse } from './service/Respons.js'
 
-const port = "8889"
-const app = express()
+import { CronJob } from 'cron';
+import { JobOneSentence } from './service/job_one_sentence.js'
 
+const job = new CronJob(
+    '0 19 05 * * *', // cronTime  
+    function () {
+        JobOneSentence.addNewSentece();
+    }, // onTick
+    null, // onComplete
+    true, // start
+);
+
+
+
+const port = "80"
+const app = express()
 app.use(express.json())
+
+//------------------------------TEST BEGIN-----------------------------
+
+app.get("/test_job_one_sentence_a_day",
+
+    (req, res) => {
+        JobOneSentence.addNewSentece();
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify("{}"));
+        return;
+    }
+)
+
+app.get("/test_get_sentence_a_day",
+    (req, res) => {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        Service.getSentenceToday().then((value) => {
+            res.end(JSON.stringify(value));
+        });
+
+        return;
+    }
+)
+
+//------------------------------TEST END------------------------------
+
+
 
 
 
@@ -28,6 +68,7 @@ app.post("/register",
     */
     (req, res) => {
         const result = validationResult(req);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
         if (result.isEmpty()) {
             const data = matchedData(req)
             Service.register({ identity_type: data.identity_type, credential: data.credential, identifier: data.identifier }).then((result) => {

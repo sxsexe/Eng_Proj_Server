@@ -2,8 +2,11 @@
 import db_books from "../db/db_books.js"
 import db_words from '../db/db_words.js'
 import db_user from '../db/db_user.js'
+import db_sentense from "../db/db_sentence.js";
 import { Errors } from "./Errors.js";
 import { MyResponse } from "./Respons.js";
+
+import moment from 'moment';
 
 import { ObjectId } from 'mongodb'
 // const db_ket_words = require("./db/db_ket_words")
@@ -180,6 +183,35 @@ export class Service {
 
         let response = new MyResponse(Errors.ERROR_NO_ERROR, { 'words': words });
         console.log("Service >>>> getUserWords resp " + response.getOutput());
+        return response;
+    }
+
+    //-------------------------------------------------------------------
+
+
+    //-----------------------------Sentence API-----------------------------
+
+
+    static async addOneSentence({ en, ch, day, from }) {
+        console.log("addOneSentence en =" + en + ", ch = " + ch + ", day = " + day);
+        let param = {
+            "_id": day,
+            'en': en,
+            "ch": ch,
+            'from': from
+        }
+        const rs = await db_sentense.add(param);
+        var response = new MyResponse(Errors.ERROR_NO_ERROR, { 'rs': rs });
+        console.log("Service >>>> addOneSentence resp " + response.getOutput());
+        return response;
+    }
+
+    static async getSentenceToday() {
+        let day = moment().format('YYYY-MM-DD');
+        console.log("getSentenceToday day =" + day);
+        const rs = await db_sentense.get(day);
+        var response = new MyResponse(Errors.ERROR_NO_ERROR, { 'rs': rs });
+        console.log("Service >>>> getSentenceToday resp " + response.getOutput());
         return response;
     }
 
