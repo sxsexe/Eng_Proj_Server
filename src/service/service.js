@@ -30,7 +30,7 @@ export class Service {
         } else {
             const result = await db_user.addUser(identity_type, credential, identifier);
             if (result && result.acknowledged) {
-                response = new MyResponse(Errors.customErrorObj(Errors.ERROR_NO_ERROR, "add user success"), null);
+                response = new MyResponse(Errors.customErrorObj(Errors.ERROR_NO_ERROR, "add user success"), { "rs": 1 });
             } else {
                 response = new MyResponse(Errors.ERROR_UER_ADD_FAILED, null);
             }
@@ -66,24 +66,34 @@ export class Service {
         return response;
     }
 
-    static async getBookInfos({ user_id, group_id }) {
+    static async getBookInfosByGroup({ user_id, group_id }) {
         const book_infos = await db_books.getBookInfos({ 'group_id': group_id });
         var response = new MyResponse(Errors.ERROR_NO_ERROR, { 'book_infos': book_infos });
         console.log("Service >>>> getBookInfos resp " + response.getOutput());
         return response;
     }
 
-    static async getUserBooks({ user_id, is_done }) {
-        const user_books = await db_user.getUserBooks({ 'user_id': user_id, 'is_done': is_done });
+    static async getUserBooks({ user_id, learn_state }) {
+        var param = {
+            '_id.user_id': user_id
+        }
+        if (learn_state) {
+            param['learn_state'] = learn_state;
+        }
+        const user_books = await db_user.getUserBooks(param);
 
+        var tmp_maps = {};
         var book_ids = []
         user_books.forEach((one) => {
-            book_ids.push(new ObjectId(one['book_id']))
+            var _book_id = one['_id']['book_id'];
+            book_ids.push(new ObjectId(_book_id));
+            tmp_maps[_book_id] = one['learn_state'];
         })
         // book_ids = ['65976d49165f19c8ab5e34c0', '65976d49165f19c8ab5e34c3']
         const books = await db_books.getBookByIDs(book_ids);
         books.forEach((one) => {
-            one['is_done'] = is_done
+            var _book_id = one['_id'].toString();
+            one['learn_state'] = tmp_maps[_book_id]
         })
 
         var response = new MyResponse(Errors.ERROR_NO_ERROR, { 'user_books': books });
@@ -91,15 +101,28 @@ export class Service {
         return response;
     }
 
+    static async upsertUserBooksStatus({ user_id, book_id, learn_state, book_type, last_time, create_time }) {
+        var values = {};
+        if (create_time) values['create_time'] = create_time;
+        if (last_time) values['last_time'] = last_time;
+        if (learn_state != null) values['learn_state'] = learn_state;
+        if (book_type != null) values['book_type'] = book_type;
+
+        const rs = await db_user.upsertUserBooksStatus(user_id, book_id, values);
+        var response = new MyResponse(Errors.ERROR_NO_ERROR, { 'result': rs });
+        console.log("Service >>>> upsertUserBooksStatus resp " + response.getOutput());
+        return response;
+    }
+
     static async addBooks({ books }) {
         const add_result = await db_books.addBooks(books);
-        var response = new MyResponse(Errors.ERROR_NO_ERROR, { 'add_result': add_result });
+        var response = new MyResponse(Errors.ERROR_NO_ERROR, { 'result': add_result });
         console.log("Service >>>> addBooks resp " + response.getOutput());
         return response;
     }
     static async deleteBooks(params) {
         const del_result = await db_books.deleteBooks(params);
-        var response = new MyResponse(Errors.ERROR_NO_ERROR, { 'del_result': del_result });
+        var response = new MyResponse(Errors.ERROR_NO_ERROR, { 'result': del_result });
         console.log("Service >>>> deleteBooks resp " + response.getOutput());
         return response;
     }

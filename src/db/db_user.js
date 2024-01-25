@@ -66,10 +66,24 @@ export default {
         const db = client.db(DB);
         const collection = db.collection(CN_UserBooks);
         console.log("DB ", "getUserBooks params = ", params)
-        const userBooks = await collection.find(params, { projection: { 'book_id': 1, '_id': 0 } }).toArray();
+        // const userBooks = await collection.find(params, { projection: { 'book_id': 1, '_id': 0 } }).toArray();
+        const userBooks = await collection.find(params).toArray();
         // const users = await collection.find().toArray();
         client.close();
         return userBooks;
+    },
+
+
+    async upsertUserBooksStatus(user_id, book_id, params) {
+        await client.connect();
+        const db = client.db(DB);
+        const collection = db.collection(CN_UserBooks);
+        const query = { "_id": { "user_id": user_id, "book_id": book_id } };
+        // const newValues = { $set: { "book_type": book_type, "is_done": is_done, "create_time": create_time, "last_time": last_time } };
+        const newValues = { $set: params };
+        const result = await collection.updateOne(query, newValues, { upsert: true })
+        client.close();
+        return result;
     },
 
 
