@@ -1,7 +1,8 @@
 import { Service } from '../service/service.js'
 import { Errors } from '../service/Errors.js'
 import { MyResponse } from '../service/Respons.js'
-import { validationResult } from 'express-validator'
+import { validationResult, matchedData } from 'express-validator'
+import { JobOneSentence } from '../service/job_one_sentence.js'
 
 export function register(req, res) {
     const result = validationResult(req);

@@ -5,6 +5,12 @@ import { MyResponse } from '../service/Respons.js'
 import { validationResult } from 'express-validator'
 
 
+export function test(req, res) {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    var resObj = { "test": "OK" }
+    res.end(JSON.stringify(resObj));
+    return;
+}
 
 export function TestTTS(req, res) {
     TTSWSServer.init();

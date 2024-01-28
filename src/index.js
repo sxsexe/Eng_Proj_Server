@@ -1,10 +1,11 @@
 import express from 'express'
 import { body } from 'express-validator'
 import { CronJob } from 'cron';
-import { JobOneSentence } from './service/job_one_sentence.js'
+
 import { createSecntenceToday, getSentenceToday, getUserBooks, login, register } from './routes/route_user.js'
 import { addBooksBackDoor, deleteBooksBackDoor, getBookInfosByGroup } from './routes/route_books.js'
 import { getRandomWords, getUserWordCount, getUserWords, upsertUserWord } from './routes/route_words.js'
+import { test } from './routes/route_test.js';
 
 const job = new CronJob(
     '0 19 05 * * *', // cronTime  
@@ -15,13 +16,14 @@ const job = new CronJob(
     true, // start
 );
 
-const port = "80"
+const port = "8230"
 const app = express()
 app.use(express.json())
 app.listen(port, () => console.log("server is listening " + port))
 
 //------------------------------TEST BEGIN-----------------------------
 
+app.get("/test", (req, res) => test(req, res))
 app.get("/test_job_one_sentence_a_day", (req, res) => createSecntenceToday(req, res))
 app.get("/test_get_sentence_a_day", (req, res) => getSentenceToday(req, res))
 
